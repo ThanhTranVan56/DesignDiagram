@@ -1,0 +1,2779 @@
+﻿
+@{
+    Layout = null;
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.6.0/joint.min.css" />
+
+<style>
+    #stencil-container {
+        width: 100%;
+        border-top: 5px solid #030A2F;
+        height: 14%;
+        border: 1px solid #030A2F;
+    }
+
+    .joint-cell * {
+        cursor: grab;
+    }
+
+    #paper-container {
+        position: absolute;
+        right: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        background: #146DFF;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+    }
+
+    #tooltip-container {
+        position: absolute;
+        right: 0;
+        top: 10px;
+        left: 150px;
+        bottom: 10px;
+    }
+
+
+    .joint-paper [joint-selector="body"],
+    .joint-paper [joint-selector="line"] {
+        filter: drop-shadow(1px 4px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .joint-link.joint-theme-default .connection-wrap {
+        stroke-width: 5 !important;
+    }
+
+    #tooltip-content h2 {
+        border-top: 1px solid #b5c0c9;
+        padding-top: 10px;
+    }
+
+    #paper {
+        background: #FFED0A;
+    }
+
+    #stencil {
+        background: #146DFF;
+    }
+
+    .toolbar {
+        position: absolute;
+        width: 300px;
+        left: calc(50% - 150px);
+        top: 18px;
+        text-align: center;
+    }
+
+    .toolbar-button {
+        outline: none;
+        background: #FFFFFF;
+        border: 1px solid #E0E0E0;
+        border-radius: 16px;
+        text-align: center;
+        font-family: sans-serif;
+        font-size: 12px;
+        padding: 6px 12px;
+        letter-spacing: 0.25px;
+        color: #222222;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none
+    }
+
+        .toolbar-button:hover {
+            background: #F7F8F9;
+        }
+
+    .jj-frame {
+        fill: #0075f2;
+    }
+
+    .link-popup {
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+        z-index: 100;
+    }
+
+    .iclitem {
+        width: 30%;
+    }
+
+    .ivlitem {
+        width: 70%;
+    }
+
+    .input-container {
+        display: flex;
+    }
+
+        .input-container label {
+            margin-bottom: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: black;
+        }
+
+        .input-container input {
+            width: 220px;
+            padding: 5px;
+            font-size: 14px;
+            margin-left: 10px;
+            color: #4A4A4A;
+            background-color: #E7F1FC;
+            border: 1px solid #4A90E2;
+            border-radius: 4px;
+        }
+
+            .input-container input:focus {
+                outline: none;
+                border-color: #0056b3;
+                box-shadow: 0 0 3px rgba(0, 86, 179, 0.5);
+            }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background-color: #e3e8f1;
+        cursor: pointer;
+        border: 1px solid #c0c8d6;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+
+        .section-header span {
+            margin-left: 10px;
+        }
+
+    .content {
+        border: 1px solid #c0c8d6;
+        border-radius: 5px;
+        padding: 10px;
+        display: none;
+        margin-bottom: 10px;
+    }
+
+    .color-picker, .outline-thickness, .outline-style, .text-settings, .link-style {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+        .color-picker div, .text-settings div {
+            display: flex;
+            align-items: center;
+        }
+
+        .color-picker label, .text-settings label {
+            margin-right: 5px;
+        }
+
+        .color-picker input[type="color"], .text-settings input[type="color"] {
+            width: 30px;
+            height: 30px;
+            border: none;
+            cursor: pointer;
+            margin-right: auto;
+            margin-left: 24px;
+        }
+
+        .outline-thickness span {
+            margin-right: 10px;
+        }
+
+        .link-style label, .outline-style label, .text-settings select {
+            margin-right: 5px;
+        }
+
+        .link-style select, .outline-style select, .text-settings select {
+            padding: 5px;
+            background-color: #E7F1FC;
+            border: 1px solid #4A90E2;
+            border-radius: 5px;
+        }
+
+    #inspector {
+        position: absolute;
+        top: 2%;
+        right: 1%;
+        left: 77%;
+        bottom: 2%;
+        background-color: powderblue;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+    #main {
+        position: relative;
+        width: 100%;
+        height: 85%;
+        border: 1px solid #030A2F;
+    }
+
+    #inspector > section {
+        padding: 10px;
+        border: 1px solid #c0c8d6;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+</style>
+@*<script type="text/javascript" src="https://unpkg.com/default-passive-events"></script>*@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.1/backbone-min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.6.0/joint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/3.0.7/canvg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.1.0/FileSaver.min.js"></script>
+
+<div id="app">
+    <div id="main">
+        <div id="paper-container">
+
+        </div>
+        <div class="toolbar">
+            <span id="zoom-out" class="toolbar-button">Zoom Out</span>
+            <span id="zoom-in" class="toolbar-button">Zoom In</span>
+        </div>
+        <div id="inspector" hidden>
+            <section id="properties-form-basic" value-id="id" hidden>
+                <span>Thuộc tính</span>
+                <div class="section-header" id="presentation-content-id" onclick="toggleContent('presentation-content', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Presentation</span>
+                </div>
+                <div id="presentation-content" class="content">
+                    <div class="color-picker">
+                        <div>
+                            <label for="fill-color">Fill:</label>
+                            <input type="color" id="basic-fill-color" name="fill-color" value="#000000">
+                        </div>
+                        <div>
+                            <label for="outline-color">Outline:</label>
+                            <input type="color" id="basic-outline-color" name="outline-color" value="#ff0000">
+                        </div>
+                    </div>
+                    <div class="outline-thickness">
+                        <span>Outline thickness:</span>
+                        <input type="range" id="basic-outline-thickness" name="outline-thickness" min="1" max="10" value="2">
+                        <span id="basic-thickness-value">5px</span>
+                    </div>
+                </div>
+
+                <div class="section-header" id="text-content-id" onclick="toggleContent('text-content', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Text</span>
+                </div>
+                <div id="text-content" class="content">
+                    <div class="text-settings">
+                        <div class="input-container">
+                            <label for="text-input">Text:</label>
+                            <input type="text" id="basic-text-input" name="text-input" value="">
+                        </div>
+                    </div>
+                    <div class="text-settings">
+                        <span>Font size:</span>
+                        <input type="range" id="basic-font-size" name="font-size" min="10" max="30" value="15">
+                        <span id="basic-font-size-value">15px</span>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-family">Font family:</label>
+                        <select id="basic-font-family" name="font-family" style="width:170px">
+                            <option value="serif">Serif</option>
+                            <option value="monospace">Monospace</option>
+                            <option value="cursive">Cursive</option>
+                            <option value="sans-serif">Sans-Serif</option>
+                            <option value="fantasy">Fantasy</option>
+                            <option value="verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-thickness">Font thickness:</label>
+                        <select id="basic-font-thickness" name="font-thickness" style="width:170px">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="text-color">Text Color:</label>
+                        <input type="color" id="basic-text-color" name="text-color" value="#000000">
+                    </div>
+                </div>
+            </section>
+            <section id="properties-form-sample" value-id="id" hidden>
+                <span>Thuộc tính</span>
+                <div class="section-header" id="header-presentation-content-id" onclick="toggleContent('header-presentation-content', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Header Presentation</span>
+                </div>
+                <div id="header-presentation-content" class="content">
+                    <div class="color-picker">
+                        <div>
+                            <label for="fill-color">Fill:</label>
+                            <input type="color" id="sample-header-fill-color" name="fill-color" value="#000000">
+                        </div>
+                        <div>
+                            <label for="outline-color">Outline:</label>
+                            <input type="color" id="sample-header-outline-color" name="outline-color" value="#ff0000">
+                        </div>
+                    </div>
+                    <div class="outline-thickness">
+                        <span>Outline thickness:</span>
+                        <input type="range" id="sample-header-outline-thickness" name="sample-header-outline-thickness" min="1" max="10" value="2">
+                        <span id="sample-header-thickness-value">5px</span>
+                    </div>
+                </div>
+                <div class="section-header" id="header-text-content-id" onclick="toggleContent('header-text-content', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Header Text</span>
+                </div>
+                <div id="header-text-content" class="content">
+                    <div class="text-settings">
+                        <div class="input-container">
+                            <label for="text-input">Text:</label>
+                            <input type="text" id="sample-header-text-input" name="text-input" value="">
+                        </div>
+                    </div>
+                    <div class="text-settings">
+                        <span>Font size:</span>
+                        <input type="range" id="sample-header-font-size" name="font-size" min="10" max="30" value="15">
+                        <span id="sample-header-font-size-value">15px</span>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-family">Font family:</label>
+                        <select id="sample-header-font-family" name="font-family" style="width:170px">
+                            <option value="serif">Serif</option>
+                            <option value="monospace">Monospace</option>
+                            <option value="cursive">Cursive</option>
+                            <option value="sans-serif">Sans-Serif</option>
+                            <option value="fantasy">Fantasy</option>
+                            <option value="verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-thickness">Font thickness:</label>
+                        <select id="sample-header-font-thickness" name="font-thickness" style="width:170px">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="text-color">Text Color:</label>
+                        <input type="color" id="sample-header-text-color" name="text-color" value="#000000">
+                    </div>
+                </div>
+                <div class="section-header" id="body-presentation-content-id" onclick="toggleContent('body-presentation-content', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Body Presentation</span>
+                </div>
+                <div id="body-presentation-content" class="content">
+                    <div class="color-picker">
+                        <div>
+                            <label for="fill-color">Fill:</label>
+                            <input type="color" id="sample-body-fill-color" name="fill-color" value="#000000">
+                        </div>
+                        <div>
+                            <label for="outline-color">Outline:</label>
+                            <input type="color" id="sample-body-outline-color" name="outline-color" value="#ff0000">
+                        </div>
+                    </div>
+                    <div class="outline-thickness">
+                        <span>Outline thickness:</span>
+                        <input type="range" id="sample-body-outline-thickness" name="outline-thickness" min="1" max="10" value="5">
+                        <span id="sample-body-thickness-value">5px</span>
+                    </div>
+                </div>
+                <div class="section-header" id="body-text-content-id" onclick="toggleContent('body-text-content', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Body Text</span>
+                </div>
+                <div id="body-text-content" class="content">
+                    <div class="text-settings">
+                        <div class="input-container">
+                            <label for="text-input">Text:</label>
+                            <input type="text" id="sample-body-text-input" name="text-input" value="Auto alarm activated?">
+                        </div>
+                    </div>
+                    <div class="text-settings">
+                        <span>Font size:</span>
+                        <input type="range" id="sample-body-font-size" name="font-size" min="10" max="30" value="15">
+                        <span id="sample-body-font-size-value">15px</span>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-family">Font family:</label>
+                        <select id="sample-body-font-family" name="font-family" style="width:170px">
+                            <option value="serif">Serif</option>
+                            <option value="monospace">Monospace</option>
+                            <option value="cursive">Cursive</option>
+                            <option value="sans-serif">Sans-Serif</option>
+                            <option value="fantasy">Fantasy</option>
+                            <option value="verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-thickness">Font thickness:</label>
+                        <select id="sample-body-font-thickness" name="font-thickness" style="width:170px">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="text-color">Text Color:</label>
+                        <input type="color" id="sample-body-text-color" name="text-color" value="#000000">
+                    </div>
+                </div>
+                <div class="section-header" id="time-info-content-id" onclick="toggleTimeInfoContent('time-info-content', this)">
+                    <div class="plus">&#43;</div>
+                    <span>Time Info</span>
+                </div>
+                <div id="time-info-content" class="content">
+                    <div class="text-settings">
+                        <div class="input-container">
+                            <label for="text-input">Text:</label>
+                            <input type="text" id="time-info-text-input" name="text-input" value="2 giờ">
+                        </div>
+                    </div>
+                    <div class="text-settings">
+                        <span>Font size:</span>
+                        <input type="range" id="time-info-font-size" name="font-size" min="10" max="30" value="15">
+                        <span id="time-info-font-size-value">15px</span>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-family">Font family:</label>
+                        <select id="time-info-font-family" name="font-family" style="width:170px">
+                            <option value="serif">Serif</option>
+                            <option value="monospace">Monospace</option>
+                            <option value="cursive">Cursive</option>
+                            <option value="sans-serif">Sans-Serif</option>
+                            <option value="fantasy">Fantasy</option>
+                            <option value="verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-thickness">Font thickness:</label>
+                        <select id="time-info-font-thickness" name="font-thickness" style="width:170px">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="text-color">Text Color:</label>
+                        <input type="color" id="time-info-text-color" name="text-color" value="#000000">
+                    </div>
+                </div>
+            </section>
+            <section id="properties-form-link" value-id="id" hidden>
+                <div class="section-header" id="link-connection-id" onclick="toggleContent('link-connection', this)">
+                    <div class="arrow">&#9656;</div>
+                    <span>Line</span>
+                </div>
+                <div id="link-connection" class="content">
+                    <div class="outline-thickness">
+                        <span>Line thickness:</span>
+                        <input type="range" id="link-outline-thickness" name="sample-header-outline-thickness" min="1" max="10" value="2">
+                        <span id="link-thickness-value">5px</span>
+                    </div>
+                    <div class="text-settings">
+                        <label for="text-color">Link Color:</label>
+                        <input type="color" id="conection-link-color" name="link-color" value="#000000">
+                    </div>
+
+                </div>
+                <div class="section-header" id="link-source-marker-id" onclick="toggleContentSourceMarker('link-source-marker', this)">
+                    <div class="plus">&#43;</div>
+                    <span> Source marker</span>
+                </div>
+                <div id="link-source-marker" class="content">
+                    <div class="color-picker">
+                        <div>
+                            <label for="fill-color">Fill:</label>
+                            <input type="color" id="link-source-marker-fill-color" name="fill-color" value="#000000">
+                        </div>
+                        <div>
+                            <label for="outline-color">Outline:</label>
+                            <input type="color" id="link-source-marker-outline-color" name="outline-color" value="#ff0000">
+                        </div>
+                    </div>
+                    <div class="outline-thickness">
+                        <span>Outline thickness:</span>
+                        <input type="range" id="link-source-marker-outline-thickness" name="link-source-marker-outline-thickness" min="1" max="10" value="1">
+                        <span id="link-source-marker-thickness-value">1px</span>
+                    </div>
+                </div>
+                <div class="section-header" id="link-target-marker-id" onclick="toggleContentTargetMarker('link-target-marker', this)">
+                    <div class="plus">&#43;</div>
+                    <span> Target marker</span>
+                </div>
+                <div id="link-target-marker" class="content">
+                    <div class="color-picker">
+                        <div>
+                            <label for="fill-color">Fill:</label>
+                            <input type="color" id="link-target-marker-fill-color" name="fill-color" value="#000000">
+                        </div>
+                        <div>
+                            <label for="outline-color">Outline:</label>
+                            <input type="color" id="link-target-marker-outline-color" name="outline-color" value="#ff0000">
+                        </div>
+                    </div>
+                    <div class="outline-thickness">
+                        <span>Outline thickness:</span>
+                        <input type="range" id="link-target-marker-outline-thickness" name="link-target-marker-outline-thickness" min="1" max="10" value="1">
+                        <span id="link-target-marker-thickness-value">1px</span>
+                    </div>
+                </div>
+                <div class="section-header" id="link-add-label-id" onclick="toggleContentLinkAdd('link-add-label',this)">
+                    <div class="plus">&#43;</div>
+                    <span>Link Label</span>
+                </div>
+                <div id="link-add-label" class="content">
+                    <div class="text-settings">
+                        <div class="input-container">
+                            <label for="text-input">Text:</label>
+                            <input type="text" id="link-label-text-input" name="text-input" value="Label">
+                        </div>
+                    </div>
+                    <div class="text-settings">
+                        <span>Font size:</span>
+                        <input type="range" id="link-label-font-size" name="font-size" min="10" max="30" value="15">
+                        <span id="link-label-font-size-value">15px</span>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-family">Font family:</label>
+                        <select id="link-label-font-family" name="font-family" style="width:170px">
+                            <option value="serif">Serif</option>
+                            <option value="monospace">Monospace</option>
+                            <option value="cursive">Cursive</option>
+                            <option value="sans-serif">Sans-Serif</option>
+                            <option value="fantasy">Fantasy</option>
+                            <option value="verdana">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="font-thickness">Font thickness:</label>
+                        <select id="link-label-font-thickness" name="font-thickness" style="width:170px">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                    </div>
+                    <div class="text-settings">
+                        <label for="text-color">Text Color:</label>
+                        <input type="color" id="link-label-text-color" name="text-color" value="#000000">
+                    </div>
+                    <div class="color-picker">
+                        <div>
+                            <label for="fill-color">Fill:</label>
+                            <input type="color" id="link-label-fill-color" name="fill-color" value="#000000">
+                        </div>
+                        <div>
+                            <label for="outline-color">Outline:</label>
+                            <input type="color" id="link-label-outline-color" name="outline-color" value="#ff0000">
+                        </div>
+                    </div>
+                    <div class="outline-thickness">
+                        <span>Outline thickness:</span>
+                        <input type="range" id="link-label-outline-thickness" name="link-label-outline-thickness" min="1" max="10" value="1">
+                        <span id="link-labels-thickness-value">1px</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div id="stencil-container"></div>
+    @*<div id="tooltip-container"></div>*@
+    <!-- Thêm button trong HTML -->
+    <!-- Thêm button trong file HTML -->
+    @*<canvas id="canvas"></canvas>
+        <img id="img01" />
+        <button id="downloadButton">Tải file PNG</button>*@
+</div>
+<script>
+
+    function toggleContent(contentId, headerElement) {
+        var content = document.getElementById(contentId);
+        if (content.style.display === "none") {
+            content.style.display = "block";
+            headerElement.querySelector(".arrow").innerHTML = "&#9662;";
+        } else {
+            content.style.display = "none";
+            headerElement.querySelector(".arrow").innerHTML = "&#9656;";
+        }
+    }
+    function toggleContentLinkAdd(contentId, headerElement) {
+
+        var content = document.getElementById(contentId);
+        if (content.style.display === "none" || content.style.display === "") {
+            addLabelLink();
+            content.style.display = "block";
+            headerElement.querySelector(".plus").innerHTML = "&#45;";
+
+        } else {
+            removeLabelLink()
+            content.style.display = "none";
+            headerElement.querySelector(".plus").innerHTML = "&#43;";
+        }
+    }
+    function toggleContentSourceMarker(contentId, headerElement) {
+
+        var content = document.getElementById(contentId);
+        if (content.style.display === "none" || content.style.display === "") {
+            addSourceMarker();
+            addSourceMarkerDefault();
+            content.style.display = "block";
+            headerElement.querySelector(".plus").innerHTML = "&#45;";
+
+        } else {
+            removeSourceMarker()
+            content.style.display = "none";
+            headerElement.querySelector(".plus").innerHTML = "&#43;";
+        }
+    }
+    function toggleContentTargetMarker(contentId, headerElement) {
+
+        var content = document.getElementById(contentId);
+        if (content.style.display === "none" || content.style.display === "") {
+            addTargetMarker();
+            addTargetMarkerDefault();
+            content.style.display = "block";
+            headerElement.querySelector(".plus").innerHTML = "&#45;";
+
+        } else {
+            removeTargetMarker()
+            content.style.display = "none";
+            headerElement.querySelector(".plus").innerHTML = "&#43;";
+        }
+    }
+    //function toggleTimeInfoContent(contentId, headerElement) {
+    //    var content = document.getElementById(contentId);
+    //    //var valueId = $('#properties-form-sample').attr('value-id');
+    //    //var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+    //    if (content.style.display === "none" || content.style.display === "") {
+    //        content.style.display = "block";
+    //        //headerElement.querySelector(".plus").innerHTML = "&#45;";
+    //        //cellView.updateTimeInfo(true, '200 Giờ');
+    //    } else {
+    //        content.style.display = "none";
+    //        headerElement.querySelector(".plus").innerHTML = "&#43;";
+    //      /*  cellView.updateTimeInfo(false);*/
+    //    }
+    //}
+    function updateValueOnInputChange(selector, displaySelector, unit) {
+        $(selector).on('input change', function () {
+            $(displaySelector).text($(this).val() + unit);
+        });
+    }
+    //basic
+
+    updateValueOnInputChange('#basic-outline-thickness', '#basic-thickness-value', 'px');
+    updateValueOnInputChange('#basic-font-size', '#basic-font-size-value', 'px');
+    function expandPropertiesBasic() {
+        $('#inspector').prop('hidden', false);
+        $('#properties-form-basic').prop('hidden', false);
+        $('#presentation-content').show();
+        $('#text-content').show();
+        $('#presentation-content-id .arrow').html('&#9662;');
+        $('#text-content-id .arrow').html('&#9662;');
+    }
+    function collapsePropertiesBasic() {
+        $('#inspector').prop('hidden', true);
+        $('#properties-form-basic').prop('hidden', true);
+        $('#text-content').hide();
+        $('#presentation-content').hide();
+        $('#presentation-content-id .arrow').html('&#9656;');
+        $('#text-content-id .arrow').html('&#9656;');
+    }
+    //sample
+    updateValueOnInputChange('#sample-header-outline-thickness', '#sample-header-thickness-value', 'px');
+    updateValueOnInputChange('#sample-header-font-size', '#sample-header-font-size-value', 'px');
+    updateValueOnInputChange('#sample-body-outline-thickness', '#sample-body-thickness-value', 'px');
+    updateValueOnInputChange('#sample-body-font-size', '#sample-body-font-size-value', 'px');
+    updateValueOnInputChange('#time-info-font-size', '#time-info-font-size-value', 'px');
+    function expandPropertiesSample() {
+        $('#inspector').prop('hidden', false);
+        $('#properties-form-sample').prop('hidden', false);
+        $('#header-presentation-content').show();
+        $('#header-text-content').show();
+        $('#body-presentation-content').show();
+        $('#body-text-content').show();
+        $('#header-presentation-content-id .arrow').html('&#9662;');
+        $('#header-text-content-id .arrow').html('&#9662;');
+        $('#body-presentation-content-id .arrow').html('&#9662;');
+        $('#body-text-content-id .arrow').html('&#9662;');
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        if (cellView.findBySelector('timeInfo')[0]) {
+            $('#time-info-content').show();
+            $('#time-info-content-id .plus').html('&#45;');
+        } else {
+            $('#time-info-content').hide();
+            $('#time-info-content-id .plus').html('&#43;');
+        }
+    }
+    function collapsePropertiesSample() {
+        $('#inspector').prop('hidden', true);
+        $('#properties-form-sample').prop('hidden', true);
+        $('#header-presentation-content').hide();
+        $('#header-text-content').hide();
+        $('#body-presentation-content').hide();
+        $('#body-text-content').hide();
+        $('#header-presentation-content-id .arrow').html('&#9656;');
+        $('#header-text-content-id .arrow').html('&#9656;');
+        $('#body-presentation-content-id .arrow').html('&#9656;');
+        $('#body-text-content-id .arrow').html('&#9656;');
+    }
+    //link
+    updateValueOnInputChange('#link-outline-thickness', '#link-thickness-value', 'px');
+    updateValueOnInputChange('#link-source-marker-outline-thickness', '#link-source-marker-thickness-value', 'px');
+    updateValueOnInputChange('#link-target-marker-outline-thickness', '#link-target-marker-thickness-value', 'px');
+    updateValueOnInputChange('#link-label-font-size', '#link-label-font-size-value', 'px');
+    updateValueOnInputChange('#link-label-outline-thickness', '#link-labels-thickness-value', 'px');
+    function expandPropertiesLink() {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        $('#inspector').prop('hidden', false);
+        $('#properties-form-link').prop('hidden', false);
+        $('#link-connection').show();
+        $('#link-connection-id .arrow').html('&#9662;');
+
+        if (cellView.model.get('labels') && cellView.model.get('labels').length > 0) {
+            $('#link-add-label').show();
+            $('#link-add-label-id .plus').html('&#45;');
+        } else {
+            $('#link-add-label').hide();
+            $('#link-add-label-id .plus').html('&#43;');
+        }
+        var source = cellView.model.attr('line/sourceMarker');
+        if (source !== undefined) {
+            $('#link-source-marker').show();
+            $('#link-source-marker-id .plus').html('&#45;');
+        } else {
+            $('#link-source-marker').hide();
+            $('#link-source-marker-id .plus').html('&#43;');
+        }
+        var target = cellView.model.attr('line/targetMarker');
+        if (target !== undefined) {
+            $('#link-target-marker').show();
+            $('#link-target-marker-id .plus').html('&#45;');
+        } else {
+            $('#link-target-marker').show();
+            $('#link-target-marker-id .plus').html('&#43;');
+        }
+
+    }
+    function collapsePropertiesLink() {
+        $('#inspector').prop('hidden', true);
+        $('#properties-form-link').prop('hidden', true);
+        $('#link-connection').hide();
+        $('#link-connection-id .arrow').html('&#9656;');
+    }
+    /*    var valueId = $('#properties-form-basic').attr('value-id');*/
+    const { dia, util, shapes, elementTools, linkTools, highlighters } = joint;
+    const colors = {
+        shape: "#ED2637",
+        canvas: "#DDE6E9",
+        stencil: "#F2F5F8"
+    };
+    const fontAttributes = {
+        fontFamily: "PPFraktionSans, sans-serif",
+        fontStyle: "normal",
+        fontSize: 14,
+        lineHeight: 18
+    };
+    const paperContainer = document.getElementById("paper-container");
+    const graphMain = new dia.Graph({}, { cellNamespace: shapes });
+    const paperMain = new dia.Paper({
+        model: graphMain,
+        cellViewNamespace: shapes,
+        width: "100%",
+        height: "100%",
+        gridSize: 10,
+        drawGrid: { name: "mesh" },
+        async: true,
+        clickThreshold: 10,
+        sorting: dia.Paper.sorting.APPROX,
+        restrictTranslate: true,
+        background: { color: "#F3F7F6" },
+        defaultConnectionPoint: {
+            name: "boundary",
+            args: {
+                selector: "body"
+            }
+        },
+        defaultLink: new shapes.standard.Link({
+            router: {
+                name: 'manhattan',
+                args: {
+                    padding: 20,
+                    startDirections: ['right', 'bottom'],
+                    endDirections: ['left', 'top']
+                }
+            },
+            connector: { name: 'rounded' },
+            attrs: {
+                line: {
+                    stroke: "#131e29",
+                    strokeWidth: 1
+                }
+            }
+        }),
+        linkPinning: false,
+        highlighting: {
+            connecting: {
+                name: "mask",
+                options: {
+                    attrs: {
+                        stroke: "#0075f2",
+                        strokeWidth: 2
+                    }
+                }
+            }
+        }
+    });
+    paperContainer.appendChild(paperMain.el);
+
+    const stencilContainer = document.getElementById("stencil-container");
+    const stencilGraph = new dia.Graph({}, { cellNamespace: shapes });
+    const stencilPaper = new dia.Paper({
+        model: stencilGraph,
+        cellViewNamespace: shapes,
+        width: "100%",
+        height: "100%",
+        interactive: false
+    });
+    stencilContainer.appendChild(stencilPaper.el);
+
+    var e1 = new joint.shapes.standard.Rectangle({
+        type: 'basiztesst',
+        position: {
+            x: 270,
+            y: 10
+        },
+        size: {
+            width: 60,
+            height: 45
+        },
+        attrs: {
+            body: {
+                fill: "#ffffff",
+                stroke: "#000000",
+                strokeWidth: 1,
+                width: "calc(w)",
+                height: "calc(h)"
+            },
+            label: {
+                text: "testtext",
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "normal",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+            }
+        }
+    });
+    var e2 = new joint.shapes.standard.Rectangle({
+        type: 'basiztesst',
+        position: {
+            x: 340,
+            y: 10
+        },
+        size: {
+            width: 60,
+            height: 45
+        },
+        attrs: {
+            body: {
+                fill: "#ffffff",
+                stroke: "#000000",
+                strokeWidth: 1,
+                width: "calc(w)",
+                height: "calc(h)",
+                rx: 12,
+                ry: 12,
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+            }
+        }
+    });
+    var e3 = new joint.shapes.standard.Circle({
+        type: 'basiztesst',
+        position: {
+            x: 190,
+            y: 10
+        },
+        size: { width: 40, height: 40 },
+        attrs: {
+            body: {
+                stroke: "#000000",
+                fill: "#ffffff",
+                strokeWidth: 1
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+            }
+        }
+    });
+    var e4 = new joint.shapes.standard.Path({
+        type: 'basiztesst',
+        position: {
+            x: 410,
+            y: 10
+        },
+        size: { width: 45, height: 45 },
+        attrs: {
+            body: {
+                d: "M calc(0.5 * w) 0 L calc(w) calc(0.5 * h) L calc(0.5 * w) calc(h) L 0 calc(0.5 * h) z",
+                stroke: "#000000",
+                fill: "#ffffff",
+                strokeWidth: 1
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+            }
+        }
+    });
+    var e5 = new joint.shapes.standard.Path({
+        type: 'basiztesst',
+        position: {
+            x: 465,
+            y: 10
+        },
+        size: { width: 60, height: 45 },
+        attrs: {
+            body: {
+                d: "M calc(0.5*w) 0 calc(w) calc(h) H 0 Z",
+                stroke: "#000000",
+                fill: "#ffffff",
+                strokeWidth: 1
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+            }
+        }
+    });
+    var e6 = new joint.shapes.standard.Path({
+        type: 'basiztesst',
+        position: {
+            x: 525,
+            y: 10
+        },
+        size: { width: 60, height: 45 },
+        attrs: {
+            body: {
+                d: "M 0 0 L calc(w) 0 L calc(0.5*w) calc(h) Z",
+                stroke: "#000000",
+                fill: "#ffffff",
+                strokeWidth: 1
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+            }
+        }
+    });
+
+
+    const Card = joint.dia.Element.define('ForeignObject', {
+        size: { width: 160, height: 50 },
+        attrs: {
+            body: {
+                refD: 'M 10 0 L 150 0 L 150 40 L 10 40 Z',
+                fill: '#FFFFFF',
+                stroke: '3D8FFF',
+                /*                'stroke-dasharray': '2, 4', // Định nghĩa kiểu gạch chấm*/
+                strokeWidth: 2
+            },
+            header: {
+                width: 'calc(w)',
+                height: 30,
+                fill: '#3D8FFF',
+                stroke: '#3D8FFF',
+            },
+            headerText: {
+                text: 'Nhóm Kiểm toán viên',
+                fontSize: 12,
+                fontFamily: 'Arial',
+                fill: 'white',
+                refX: 10,
+                refY: 15,
+                textAnchor: 'start',
+                textVerticalAnchor: 'middle',
+            },
+            foreignObject: {
+                width: 'calc(w)',
+                height: 'calc(h-30)',
+                refY: 30,
+            }
+        },
+    }, {
+        markup: [
+            {
+                tagName: 'path',
+                selector: 'body'
+            },
+            {
+                tagName: 'foreignObject',
+                selector: 'foreignObject',
+                children: [
+                    {
+                        tagName: 'div',
+                        namespaceURI: 'http://www.w3.org/1999/xhtml',
+                        selector: 'background',
+                        style: {
+                            backgroundColor: '#FFFFFF',
+                            height: '100%',
+                            display: 'flex'
+                        },
+                        children: [
+                            {
+                                tagName: 'p',
+                                selector: 'groupInfo',
+                                style: {
+                                    color: 'black',
+                                    font: '16px sans-serif',
+                                    padding: '10px',
+                                    margin: 0,
+                                    width: '65%',
+                                    display: 'flex',
+                                    'align-items': 'center'
+                                },
+                                children: [
+                                    {
+                                        tagName: 'img',
+                                        attributes: { src: '/assets/img/user-groups.png', width: '16', height: '16' }
+                                    },
+                                    {
+                                        tagName: 'span',
+                                        textContent: 'Nhóm Kế toán viên',
+                                        style: { color: 'black', fontSize: '12px', fontFamily: 'Arial', 'margin-left': '7px' }
+                                    },
+                                ]
+                            },
+                            {
+                                tagName: 'p',
+                                selector: 'timeInfo',
+                                style: {
+                                    color: 'black',
+                                    font: '16px sans-serif',
+                                    padding: '10px',
+                                    margin: 0,
+                                    width: '35%',
+                                    display: 'flex',
+                                    'align-items': 'center'
+                                },
+                                children: [
+                                    {
+                                        tagName: 'img',
+                                        attributes: { src: '/assets/img/clock-80.png', width: '16', height: '16' }
+                                    },
+                                    {
+                                        tagName: 'span',
+                                        textContent: '120 Giờ',
+                                        style: { color: 'black', fontSize: '12px', fontFamily: 'Arial', 'margin-left': '7px' }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                tagName: 'rect',
+                selector: 'header'
+            },
+            {
+                tagName: 'text',
+                selector: 'headerText'
+            },
+        ]
+    });
+
+    const Card2 = joint.dia.Element.define('ForeignObject', {
+        size: { width: 160, height: 50 },
+        attrs: {
+            body: {
+                refD: 'M 10 0 L 150 0 L 150 40 L 10 40 Z',
+                fill: '#FFFFFF',
+                stroke: '#3D8FFF'
+            },
+            header: {
+                width: 'calc(w)',
+                height: 30,
+                fill: '#3D8FFF',
+                stroke: '#3D8FFF',
+            },
+            headerText: {
+                text: 'Tiếp nhận hồ sơ và kiểm tra',
+                fontSize: 12,
+                fontFamily: 'Arial',
+                fill: 'white',
+                refX: 10,
+                refY: 15,
+                textAnchor: 'start',
+                textVerticalAnchor: 'middle',
+            },
+            foreignObject: {
+                width: 'calc(w)',
+                height: 'calc(h-30)',
+                refY: 30,
+            }
+        },
+    }, {
+        markup: [
+            {
+                tagName: 'path',
+                selector: 'body'
+            },
+            {
+                tagName: 'foreignObject',
+                selector: 'foreignObject',
+                children: [
+                    {
+                        tagName: 'div',
+                        namespaceURI: 'http://www.w3.org/1999/xhtml',
+                        selector: 'background',
+                        style: {
+                            backgroundColor: '#FFFFFF',
+                            height: '100%',
+                            display: 'flex'
+                        },
+                        children: [
+                            {
+                                tagName: 'p',
+                                style: {
+                                    color: 'black',
+                                    font: '16px sans-serif',
+                                    padding: '10px',
+                                    margin: 0,
+                                    display: 'flex',
+                                    'align-items': 'center'
+                                },
+                                children: [
+                                    {
+                                        tagName: 'img',
+                                        attributes: { src: '/assets/img/user-groups.png', width: '16', height: '16' }
+                                    },
+                                    {
+                                        tagName: 'span',
+                                        textContent: 'Nhóm Kế toán viên',
+                                        style: { color: 'black', fontSize: '12px', fontFamily: 'Arial', 'margin- left': '7px' }
+                                    },
+
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                tagName: 'rect',
+                selector: 'header'
+            },
+            {
+                tagName: 'text',
+                selector: 'headerText' // Đánh dấu selector cho văn bản header
+            },
+        ]
+    });
+    var c1 = new joint.shapes.standard.Path({
+        type: "standard.Start",
+        position: {
+            x: 10,
+            y: 10
+        },
+        size: { width: 120, height: 45 },
+        attrs: {
+            body: {
+                d: "M 10 0 L 150 0 L 150 40 L 10 40 Z",
+                stroke: "#000000",
+                fill: "#ffffff",
+                strokeWidth: 1
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+                text: "Khối start"
+            }
+        }
+    });
+    var c2 = new joint.shapes.standard.Path({
+        type: "standard.cellss",
+        position: {
+            x: 140,
+            y: 10
+        },
+        size: { width: 120, height: 45 },
+        attrs: {
+            body: {
+                d: "M 10 0 L 150 0 L 150 40 L 10 40 Z",
+                stroke: "#000000",
+                fill: "#ffffff",
+                strokeWidth: 1
+            },
+            label: {
+                fill: "#000000",
+                fontSize: 16,
+                fontWeight: "bold",
+                textVerticalAnchor: "middle",
+                textAnchor: "middle",
+                fontFamily: "sans-serif",
+                text: "Khối element"
+            }
+        }
+    });
+    stencilGraph.addCells([c1, c2]);
+    stencilGraph.addCells([e1, e2, e4, e5, e6]);
+
+    var EditableRectangle = joint.dia.Element.define('EditableRectangle', {
+        size: { width: 100, height: 40 },
+        attrs: {
+            body: {
+                refWidth: '100%',
+                refHeight: '100%',
+                fill: '#ffffff',
+                stroke: '#000000'
+            },
+            foreignObject: {
+                refWidth: '100%',
+                refHeight: '100%',
+                style: {
+                    'pointer-events': 'none'
+                }
+            },
+            editText: {
+                text: 'Double-click to edit',
+                fontSize: 16,
+                fontFamily: 'sans-serif',
+                textAnchor: 'middle',
+                x: 50, // Center horizontally
+                y: 20, // Center vertically
+                fill: '#000000'
+            }
+        }
+    }, {
+        markup: [{
+            tagName: 'rect',
+            selector: 'body'
+        }, {
+            tagName: 'foreignObject',
+            selector: 'foreignObject',
+            children: [{
+                tagName: 'div',
+                namespaceURI: 'http://www.w3.org/1999/xhtml',
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'center'
+                },
+                children: [{
+                    tagName: 'input',
+                    namespaceURI: 'http://www.w3.org/1999/xhtml',
+                    style: {
+                        width: '90%',
+                        height: '90%',
+                        border: 'none',
+                        outline: 'none',
+                        'text-align': 'center',
+                        'font-size': '16px',
+                        'font-family': 'sans-serif',
+                        'pointer-events': 'auto'
+                    },
+                    attributes: {
+                        'type': 'text',
+                        'value': 'Double-click to edit'
+                    }
+                }]
+            }]
+        }]
+    });
+    const EditableTriangle = joint.dia.Element.define('EditableTriangle', {
+        size: { width: 100, height: 80 },
+        attrs: {
+            body: {
+                refPoints: '0,80 50,0 100,80', // Định nghĩa hình tam giác bằng điểm
+                fill: '#ffffff',
+                stroke: '#000000',
+                'stroke-width': 1
+            },
+            foreignObject: {
+                refWidth: '100%',
+                refHeight: '100%',
+                style: {
+                    'pointer-events': 'none',
+                    'clip-path': 'polygon(0% 100%, 50% 0%, 100% 100%)'
+                }
+            },
+            editText: {
+                text: 'Double-click to edit',
+                fontSize: 16,
+                fontFamily: 'sans-serif',
+                textAnchor: 'middle',
+                refX: '50%',
+                refY: '50%',
+                yAlignment: 'middle',
+                fill: '#000000'
+            }
+        }
+    }, {
+        markup: [{
+            tagName: 'polygon',
+            selector: 'body'
+        }, {
+            tagName: 'foreignObject',
+            selector: 'foreignObject',
+            children: [{
+                tagName: 'div',
+                namespaceURI: 'http://www.w3.org/1999/xhtml',
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'center',
+                    'clip-path': 'polygon(0% 100%, 50% 0%, 100% 100%)'
+                },
+                children: [{
+                    tagName: 'input',
+                    namespaceURI: 'http://www.w3.org/1999/xhtml',
+                    style: {
+                        width: '90%',
+                        height: '90%',
+                        border: 'none',
+                        outline: 'none',
+                        'text-align': 'center',
+                        'font-size': '16px',
+                        'font-family': 'sans-serif',
+                        'pointer-events': 'auto',
+                        'margin-top': '25%'
+                    },
+                    attributes: {
+                        'type': 'text',
+                        'value': 'Double-click to edit'
+                    }
+                }]
+            }]
+        }]
+    });
+
+
+
+    const EditableInvertedTriangle = joint.dia.Element.define('EditableInvertedTriangle', {
+        size: { width: 100, height: 80 },
+        attrs: {
+            body: {
+                refPoints: '0,0 50,80 100,0',
+                fill: '#ffffff',
+                stroke: '#000000',
+                'stroke-width': 1
+            },
+            foreignObject: {
+                refWidth: '100%',
+                refHeight: '100%',
+                style: {
+                    'pointer-events': 'none',
+                    'clip-path': 'polygon(0% 0%, 50% 100%, 100% 0%)'
+                }
+            },
+            editText: {
+                text: 'Double-click to edit',
+                fontSize: 16,
+                fontFamily: 'sans-serif',
+                textAnchor: 'middle',
+                refX: '50%',
+                refY: '50%',
+                yAlignment: 'middle',
+                fill: '#000000'
+            }
+        }
+    }, {
+        markup: [{
+            tagName: 'polygon',
+            selector: 'body'
+        }, {
+            tagName: 'foreignObject',
+            selector: 'foreignObject',
+            children: [{
+                tagName: 'div',
+                namespaceURI: 'http://www.w3.org/1999/xhtml',
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'center',
+                    'clip-path': 'polygon(0% 0%, 50% 100%, 100% 0%)'
+                },
+                children: [{
+                    tagName: 'input',
+                    namespaceURI: 'http://www.w3.org/1999/xhtml',
+                    style: {
+                        width: '90%',
+                        height: '90%',
+                        border: 'none',
+                        outline: 'none',
+                        'text-align': 'center',
+                        'font-size': '16px',
+                        'font-family': 'sans-serif',
+                        'pointer-events': 'auto',
+                        'margin-bottom': '25%'
+                    },
+                    attributes: {
+                        'type': 'text',
+                        'value': 'Double-click to edit'
+                    }
+                }]
+            }]
+        }]
+    });
+
+
+
+    const EditableRhombus = joint.dia.Element.define('EditableRhombus', {
+        size: { width: 100, height: 100 },
+        attrs: {
+            body: {
+                refPoints: '50,0 100,50 50,100 0,50', // Định nghĩa hình thoi bằng điểm
+                fill: '#ffffff',
+                stroke: '#000000',
+                'stroke-width': 1
+            },
+            foreignObject: {
+                refWidth: '100%',
+                refHeight: '100%',
+                style: {
+                    'pointer-events': 'none',
+                    'clip-path': 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)'
+                }
+            },
+            editText: {
+                text: 'Double-click to edit',
+                fontSize: 16,
+                fontFamily: 'sans-serif',
+                textAnchor: 'middle',
+                refX: '50%',
+                refY: '50%',
+                yAlignment: 'middle',
+                fill: '#000000'
+            }
+        }
+    }, {
+        markup: [{
+            tagName: 'polygon',
+            selector: 'body'
+        }, {
+            tagName: 'foreignObject',
+            selector: 'foreignObject',
+            children: [{
+                tagName: 'div',
+                namespaceURI: 'http://www.w3.org/1999/xhtml',
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    'align-items': 'center',
+                    'justify-content': 'center',
+                    'clip-path': 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' // Cắt nội dung theo hình thoi
+                },
+                children: [{
+                    tagName: 'input',
+                    namespaceURI: 'http://www.w3.org/1999/xhtml',
+                    style: {
+                        width: '90%',
+                        height: '90%',
+                        border: 'none',
+                        outline: 'none',
+                        'text-align': 'center',
+                        'font-size': '16px',
+                        'font-family': 'sans-serif',
+                        'pointer-events': 'auto'
+                    },
+                    attributes: {
+                        'type': 'text',
+                        'value': 'Double-click to edit'
+                    }
+                }]
+            }]
+        }]
+    });
+
+
+
+
+
+    var ed1 = new EditableRectangle({
+        position: { x: 300, y: 50 },
+        size: { width: 200, height: 40 },
+    });
+    var triangle = new EditableTriangle({
+        position: { x: 100, y: 50 },
+        size: { width: 100, height: 100 },
+    });
+    var invertedTriangle = new EditableInvertedTriangle({
+        position: { x: 200, y: 50 },
+        size: { width: 100, height: 100 }
+    });
+    var diamond = new EditableRhombus({
+        position: { x: 250, y: 50 },
+        size: { width: 100, height: 100 },
+    });
+    //graphMain.addCell(ed1);
+    //graphMain.addCells([triangle, invertedTriangle, diamond]);
+
+    //const Card3 = joint.dia.Element.define('ForeignObject', {
+    //    size: { width: 160, height: 70 },
+    //    attrs: {
+    //        body: {
+    //            refD: 'M 10 0 L 150 0 L 150 40 L 10 40 Z',
+    //            fill: '#FFFFFF',
+    //            stroke: '#3D8FFF',
+    //            strokeWidth: 1,
+    //        },
+    //        header: {
+    //            width: 'calc(w)',
+    //            height: 30,
+    //            fill: '#3D8FFF',
+    //            stroke: '#3D8FFF',
+    //        },
+    //        headerText: {
+    //            text: 'Nhóm Kiểm toán viên',
+    //            fontSize: 12,
+    //            fontFamily: 'sans-serif',
+    //            fontWeight: 'bold',
+    //            fill: 'white',
+    //            refX: 10,
+    //            refY: 15,
+    //            textAnchor: 'start',
+    //            textVerticalAnchor: 'middle',
+    //        },
+    //        foreignObject: {
+    //            width: 'calc(w)',
+    //            height: 'calc(h-30)',
+    //            refY: 30,
+    //        }
+    //    },
+    //}, {
+    //    markup: [
+    //        {
+    //            tagName: 'path',
+    //            selector: 'body'
+    //        },
+    //        {
+    //            tagName: 'foreignObject',
+    //            selector: 'foreignObject',
+    //            children: [
+    //                {
+    //                    tagName: 'div',
+    //                    namespaceURI: 'http://www.w3.org/1999/xhtml',
+    //                    selector: 'background',
+    //                    style: {
+    //                        backgroundColor: '#D704E1',
+    //                        height: '100%',
+    //                        display: 'flex'
+    //                    },
+    //                    children: [
+    //                        {
+    //                            tagName: 'p',
+    //                            selector: 'groupInfo',
+    //                            style: {
+    //                                color: 'black',
+    //                                font: '16px sans-serif',
+    //                                padding: '10px',
+    //                                margin: 0,
+    //                                width: '100%',
+    //                                display: 'flex',
+    //                                'align-items': 'center'
+    //                            },
+    //                            children: [
+    //                                {
+    //                                    tagName: 'img',
+    //                                    attributes: { src: '/assets/img/user-groups.png', width: '16', height: '16' }
+    //                                },
+    //                                {
+    //                                    tagName: 'span',
+    //                                    textContent: 'Nhóm Kế toán viên',
+    //                                    style: { color: 'black', fontSize: '12px', fontFamily: 'Arial', 'margin-left': '7px' }
+    //                                },
+    //                            ]
+    //                        },
+    //                    ]
+    //                }
+    //            ]
+    //        },
+    //        {
+    //            tagName: 'rect',
+    //            selector: 'header'
+    //        },
+    //        {
+    //            tagName: 'text',
+    //            selector: 'headerText'
+    //        },
+    //    ]
+    //});
+
+    //Card3.prototype.updateTimeInfo = function (addTimeInfo, timeText = '120 Giờ') {
+    //    debugger;
+    //    const view = this.findView(paperMain);
+    //    if (!view) return;
+
+    //    const groupInfoSelector = view.findBySelector('groupInfo')[0];
+    //    const foreignObjectSelector = view.findBySelector('foreignObject')[0];
+    //    if (!groupInfoSelector || !foreignObjectSelector) return;
+
+    //    const background = view.findBySelector('background')[0];
+    //    if (!background) return;
+
+    //    if (addTimeInfo) {
+    //        // Thêm timeInfo nếu chưa tồn tại
+    //        if (!view.findBySelector('timeInfo')[0]) {
+    //            var widths = view.model.size().width + (view.model.size().width / 100 * 55);
+    //            var heights = view.model.size().height;
+    //            this.resize(widths, heights);
+    //            groupInfoSelector.setAttribute('style', 'color: black; font: 16px sans-serif; padding: 10px; margin: 0; width: 65%; display: flex; align-items: center');
+    //            const timeInfo = document.createElementNS('http://www.w3.org/1999/xhtml', 'p');
+    //            timeInfo.setAttribute('joint-selector', 'timeInfo');
+    //            timeInfo.setAttribute('style', 'color: black; font: 16px sans-serif; padding: 10px; margin: 0; width: 35%; display: flex; align-items: center');
+    //            const img = document.createElementNS('http://www.w3.org/1999/xhtml', 'img');
+    //            img.setAttribute('src', '/assets/img/clock-80.png');
+    //            img.setAttribute('width', '16');
+    //            img.setAttribute('height', '16');
+    //            const span = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+    //            span.textContent = timeText;
+    //            span.setAttribute('style', 'color: black; font-size: 12px; font-family: Arial; margin-left: 7px');
+    //            timeInfo.appendChild(img);
+    //            timeInfo.appendChild(span);
+    //            background.appendChild(timeInfo);
+    //        }
+    //    } else {
+    //        // Bỏ timeInfo nếu tồn tại
+    //        const timeInfo = view.findBySelector('timeInfo')[0];
+    //        if (timeInfo) {
+    //            timeInfo.remove();
+    //            groupInfoSelector.setAttribute('style', 'width: 100%');
+    //        }
+    //    }
+    //};
+    Card.prototype.updateTimeInfo = function (addTimeInfo, timeText = '120 Giờ') {
+        debugger;
+        const view = this.findView(paperMain);
+        if (!view) return;
+
+        const groupInfoSelector = view.findBySelector('groupInfo')[0];
+        const foreignObjectSelector = view.findBySelector('foreignObject')[0];
+        if (!groupInfoSelector || !foreignObjectSelector) return;
+
+        const background = view.findBySelector('background')[0];
+        if (!background) return;
+
+        if (addTimeInfo) {
+            // Thêm timeInfo nếu chưa tồn tại
+            if (!view.findBySelector('timeInfo')[0]) {
+                var widths = view.model.size().width + (view.model.size().width / 100 * 55);
+                var heights = view.model.size().height;
+                this.resize(widths, heights);
+                groupInfoSelector.setAttribute('style', 'color: black; font: 16px sans-serif; padding: 10px; margin: 0; width: 65%; display: flex; align-items: center');
+                const timeInfo = document.createElementNS('http://www.w3.org/1999/xhtml', 'p');
+                timeInfo.setAttribute('joint-selector', 'timeInfo');
+                timeInfo.setAttribute('style', 'color: black; font: 16px sans-serif; padding: 10px; margin: 0; width: 35%; display: flex; align-items: center');
+                const img = document.createElementNS('http://www.w3.org/1999/xhtml', 'img');
+                img.setAttribute('src', '/assets/img/clock-80.png');
+                img.setAttribute('width', '16');
+                img.setAttribute('height', '16');
+                const span = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+                span.textContent = timeText;
+                span.setAttribute('style', 'color: black; font-size: 12px; font-family: Arial; margin-left: 7px');
+                timeInfo.appendChild(img);
+                timeInfo.appendChild(span);
+                background.appendChild(timeInfo);
+            }
+        } else {
+            // Bỏ timeInfo nếu tồn tại
+            const timeInfo = view.findBySelector('timeInfo')[0];
+            if (timeInfo) {
+                timeInfo.remove();
+                groupInfoSelector.setAttribute('style', 'width: 100%');
+            }
+        }
+    };
+    Card2.prototype.updateTimeInfo = function (addTimeInfo, timeText = '120 Giờ') {
+        debugger;
+        const view = this.findView(paperMain);
+        if (!view) return;
+
+        const groupInfoSelector = view.findBySelector('groupInfo')[0];
+        const foreignObjectSelector = view.findBySelector('foreignObject')[0];
+        if (!groupInfoSelector || !foreignObjectSelector) return;
+
+        const background = view.findBySelector('background')[0];
+        if (!background) return;
+
+        if (addTimeInfo) {
+            // Thêm timeInfo nếu chưa tồn tại
+            if (!view.findBySelector('timeInfo')[0]) {
+                var widths = view.model.size().width + (view.model.size().width / 100 * 55);
+                var heights = view.model.size().height;
+                this.resize(widths, heights);
+                groupInfoSelector.setAttribute('style', 'color: black; font: 16px sans-serif; padding: 10px; margin: 0; width: 65%; display: flex; align-items: center');
+                const timeInfo = document.createElementNS('http://www.w3.org/1999/xhtml', 'p');
+                timeInfo.setAttribute('joint-selector', 'timeInfo');
+                timeInfo.setAttribute('style', 'color: black; font: 16px sans-serif; padding: 10px; margin: 0; width: 35%; display: flex; align-items: center');
+                const img = document.createElementNS('http://www.w3.org/1999/xhtml', 'img');
+                img.setAttribute('src', '/assets/img/clock-80.png');
+                img.setAttribute('width', '16');
+                img.setAttribute('height', '16');
+                const span = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+                span.textContent = timeText;
+                span.setAttribute('style', 'color: black; font-size: 12px; font-family: Arial; margin-left: 7px');
+                timeInfo.appendChild(img);
+                timeInfo.appendChild(span);
+                background.appendChild(timeInfo);
+            }
+        } else {
+            // Bỏ timeInfo nếu tồn tại
+            const timeInfo = view.findBySelector('timeInfo')[0];
+            if (timeInfo) {
+                timeInfo.remove();
+                groupInfoSelector.setAttribute('style', 'width: 100%');
+            }
+        }
+    };
+    // Sử dụng phương thức updateTimeInfo để thêm hoặc bớt timeInfo
+    /* cardElement.updateTimeInfo(true, '200 Giờ'); // Thêm timeInfo*/
+    // cardElement.updateTimeInfo(false); // Bớt timeInfo
+
+
+    stencilPaper.on('cell:pointerdown', function (cellView, e, x, y) {
+        var widthc = cellView.model.size().width;
+        var heightc = cellView.model.size().height;
+        const cellType = cellView.model.get('type');
+        if (cellType === 'standard.Start') {
+            widthc = 170;
+            heightc = 70;
+        } else if (cellType === 'standard.cellss') {
+            widthc = 235;
+            heightc = 70;
+        } else {
+            widthc = 130;
+            heightc = 70
+        }
+        $('body').append('<div id="flyPaper" style="position:fixed; left:0; top:0; z-index:100; opacity:0.5; pointer-events:none; width:' + widthc + 'px; height:' + heightc + 'px;"></div>');
+        var flyGraph = new joint.dia.Graph();
+        flyPaper = new joint.dia.Paper({
+            el: $('#flyPaper'),
+            model: flyGraph,
+            interactive: false,
+            width: widthc,
+            height: heightc
+        });
+
+
+        if (cellType === 'standard.Start') {
+            flyShape = new Card2();
+            flyShape.resize(170, 70);
+        } else if (cellType === 'standard.cellss') {
+            flyShape = new Card();
+            flyShape.resize(235, 70);
+        } else {
+            flyShape = cellView.model.clone();
+            flyShape.resize(130, 70);
+        }
+        pos = cellView.model.position(),
+            offset = {
+                x: x - pos.x,
+                y: y - pos.y
+            };
+        flyShape.position(0, 0);
+        flyGraph.addCell(flyShape);
+        $('body').css('cursor', 'grabbing');
+        $("#flyPaper").css('cursor', 'grabbing');
+        $("#flyPaper").offset({
+            left: e.pageX - offset.x,
+            top: e.pageY - offset.y
+        });
+        $('body').on('mousemove.fly', function (e) {
+            $("#flyPaper").offset({
+                left: e.pageX - offset.x,
+                top: e.pageY - offset.y
+            });
+        });
+        $('body').on('mouseup.fly', function (e) {
+            var x = e.pageX,
+                y = e.pageY,
+                target = paperMain.$el.offset();
+
+            if (x > target.left && x < target.left + paperMain.$el.width() && y > target.top && y < target.top + paperMain.$el.height()) {
+                var s = flyShape.clone();
+                s.position(x - target.left - offset.x - 32, y - target.top - offset.y - 20);
+                graphMain.addCell(s);
+            }
+            $('body').css('cursor', '');
+            $("#flyPaper").css('cursor', '');
+            $('body').off('mousemove.fly').off('mouseup.fly');
+            flyShape.remove();
+            $('#flyPaper').remove();
+        });
+    });
+    const ResizeTool = joint.elementTools.Control.extend({
+        getPosition: function (view) {
+            const model = view.model;
+            const { width, height } = model.size();
+            return { x: width, y: height };
+        },
+        setPosition: function (view, coordinates) {
+            const model = view.model;
+            model.resize(Math.max(coordinates.x, 1), Math.max(coordinates.y, 1));
+        }
+    });
+    const RotateTool = joint.elementTools.Control.extend({
+        children: [
+            {
+                tagName: "image",
+                selector: "handle",
+                attributes: {
+                    cursor: "pointer",
+                    x: -10,
+                    y: -10,
+                    width: 15,
+                    height: 15,
+                    "xlink:href": "/assets/img/rotate-48.png"
+                }
+            },
+            {
+                tagName: "rect",
+                selector: "extras",
+                attributes: {
+                    "pointer-events": "none",
+                    fill: "none",
+                    stroke: "#33334F",
+                    "stroke-dasharray": "2,4",
+                    rx: 5,
+                    ry: 5
+                }
+            }
+        ],
+        getPosition: function (view) {
+            const { model } = view;
+            const { width, height } = model.size();
+            return new g.Point(-8, -8);
+        },
+        setPosition: function (view, coordinates) {
+            const { model } = view;
+            const { width, height } = model.size();
+            const center = new g.Point(width / 2, height / 2);
+            const angle = center.angleBetween(coordinates, this.getPosition(view));
+            model.rotate(Math.round(angle));
+        }
+    });
+    let selectedCellView = null;
+
+    paperMain.on("cell:pointerclick", function (cellView, e, x, y) {
+        debugger;
+        if (cellView.model.isLink()) {
+            linkView = cellView;
+            paperMain.removeTools();
+            const linkToolsView = new dia.ToolsView({
+                tools: [
+                    new linkTools.Vertices(),
+                    new linkTools.Remove({
+                        x: 0,
+                        y: 0
+                    }),
+                ]
+            });
+            linkView.addTools(linkToolsView);
+            collapsePropertiesBasic();
+            collapsePropertiesSample();
+            valuetransferLink(cellView);
+            expandPropertiesLink();
+
+
+        } else {
+            selectedCellView = cellView;
+            paperMain.removeTools();
+            if (cellView.model && cellView.model.get('type')) {
+                var cellType = cellView.model.get('type');
+            }
+            if (cellType === "basiztesst") {
+                collapsePropertiesBasic();
+                collapsePropertiesLink();
+                valuetransferBasic(cellView);
+                expandPropertiesBasic();
+
+
+            } else if (cellType === "ForeignObject") {
+                collapsePropertiesBasic();
+                collapsePropertiesLink();
+                valuetransferSample(cellView);
+                expandPropertiesSample();
+            }
+
+            const toolsView = new joint.dia.ToolsView({
+                tools: [
+                    new joint.elementTools.Boundary({ useModelGeometry: true }),
+                    new joint.elementTools.Connect({ useModelGeometry: true, x: "calc(w + 10)", y: "calc(h / 2)" }),
+                    new ResizeTool({
+                        selector: "body",
+                        handleAttributes: {
+                            fill: "#4666E5"
+                        },
+                        x: "calc(w + 10)",
+                        y: "calc(h + 10)"
+                    }),
+                    new RotateTool({
+                        selector: "body"
+                    }),
+                    new elementTools.Remove({
+                        useModelGeometry: true,
+                        x: -10,
+                        y: "calc(h + 10)"
+                    })
+                ]
+            });
+            cellView.addTools(toolsView);
+        }
+
+    });
+    //link
+    function valuetransferLink(cellView) {
+        debugger;
+        var id = cellView.model.id;
+        $('#properties-form-link').attr('value-id', id);
+
+        var line_stroke = cellView.model.attr('line/stroke');
+        var line_stroke_w = cellView.model.attr('line/strokeWidth');
+        /*        var kieu = cellView.model.attr('line/stroke-dasharray');*/
+        $('#conection-link-color').val(line_stroke);
+        $('#link-outline-thickness').val(line_stroke_w);
+        $('#link-thickness-value').text(line_stroke_w + 'px')
+        var source = cellView.model.attr('line/sourceMarker');
+        if (source !== undefined) {
+            $('#link-source-marker-fill-color').val(source.fill || '#000000');
+            $('#link-source-marker-outline-color').val(source.stroke || '#000000');
+            $('#link-source-marker-outline-thickness').val(source.strokeWidth || 1);
+            $('#link-source-marker-thickness-value').text((source.strokeWidth || 1) + 'px');
+        }
+        var target = cellView.model.attr('line/targetMarker');
+        if (target !== undefined) {
+            $('#link-target-marker-fill-color').val(target.fill || '#000000');
+            $('#link-target-marker-outline-color').val(target.stroke || '#000000');
+            $('#link-target-marker-outline-thickness').val(target.strokeWidth || 1);
+            $('#link-target-marker-thickness-value').text((target.strokeWidth || 1) + 'px');
+        }
+        // Lấy danh sách các nhãn
+        var labels = cellView.model.labels();
+
+        if (labels.length > 0) {
+            $('#link-label-text-input').val(labels[0].attrs.text.text);
+            $('#link-label-font-size').val(labels[0].attrs.text.fontSize);
+            $('#link-label-font-size-value').text(labels[0].attrs.text.fontSize + 'px');
+            $('#link-label-font-family').val(labels[0].attrs.text.fontFamily);
+            $('#link-label-font-thickness').val(labels[0].attrs.text.fontWeight);
+            $('#link-label-text-color').val(labels[0].attrs.text.fill);
+            $('#link-label-fill-color').val(labels[0].attrs.rect.fill);
+            $('#link-label-outline-color').val(labels[0].attrs.rect.stroke);
+            $('#link-label-outline-thickness').val(labels[0].attrs.rect.strokeWidth);
+        } else {
+            console.log('No labels found');
+        }
+
+
+        if (cellView.model.get('labels') && cellView.model.get('labels').length > 0) {
+
+        }
+    }
+    function addSourceMarkerDefault() {
+        $('#link-source-marker-fill-color').val('#008ED2');
+        $('#link-source-marker-outline-color').val('#01293C');
+        $('#link-source-marker-outline-thickness').val(1);
+        $('#link-source-marker-thickness-value').text('1px');
+    }
+    function addTargetMarkerDefault() {
+        $('#link-target-marker-fill-color').val('#008ED2');
+        $('#link-target-marker-outline-color').val('#01293C');
+        $('#link-target-marker-outline-thickness').val(1);
+        $('#link-target-marker-thickness-value').text('1px');
+    }
+    function addLinkLabelDefault() {
+        $('#link-target-marker-fill-color').val('#008ED2');
+        $('#link-target-marker-outline-color').val('#01293C');
+        $('#link-target-marker-outline-thickness').val(1);
+        $('#link-target-marker-thickness-value').text('1px');
+    }
+    function addLabelLink() {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.appendLabel({
+            attrs: {
+                text: {
+                    text: 'Label',
+                    fill: '#000000',
+                    fontSize: 14,
+                    textAnchor: 'middle',
+                    yAlignment: 'middle',
+                    fontFamily: 'serif',
+                    fontWeight: 'normal'
+                },
+                rect: {
+                    fill: '#FFFFFF',
+                    stroke: '#808080',
+                    strokeWidth: 1
+                }
+            }
+        });
+        $('#link-label-text-input').val('Label');
+        $('#link-label-font-size').val(14);
+        $('#link-label-font-size-value').text(14 + 'px');
+        $('#link-label-font-family').val('serif');
+        $('#link-label-font-thickness').val('normal');
+        $('#link-label-text-color').val('#000000');
+        $('#link-label-fill-color').val('#FFFFFF');
+        $('#link-label-outline-color').val('#808080');
+        $('#link-label-outline-thickness').val(1);
+    }
+    function removeLabelLink() {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        if (cellView.model.get('labels').length > 0) {
+            cellView.model.removeLabel(0);
+        }
+    }
+    function addSourceMarker() {
+        debugger;
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var source = cellView.model.attr('line/sourceMarker');
+        if (source !== undefined) {
+            console.log('Source marker already exists:', source);
+        } else {
+            console.log('Source marker does not exist, adding new one.');
+            cellView.model.attr('line/sourceMarker', {
+                d: "M 10 -5 0 0 10 5 z",
+                type: "path",
+                stroke: "#01293C",
+                fill: "#008ED2",
+                strokeWidth: 1
+            });
+        }
+    }
+    function removeSourceMarker() {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+
+        if (cellView && cellView.model.isLink()) {
+            var source = cellView.model.attr('line/sourceMarker');
+            if (source !== undefined) {
+                console.log('Source marker exists, removing it.');
+                cellView.model.removeAttr('line/sourceMarker');
+            } else {
+                console.log('Source marker does not exist.');
+            }
+        }
+    }
+    function addTargetMarker() {
+        debugger;
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var target = cellView.model.attr('line/targetMarker');
+        if (target !== undefined) {
+            console.log('Target marker already exists:', target);
+        } else {
+            console.log('Target marker does not exist, adding new one.');
+            cellView.model.attr('line/targetMarker', {
+                d: "M 10 -5 0 0 10 5 z",
+                type: "path",
+                stroke: "#01293C",
+                fill: "#008ED2",
+                strokeWidth: 1
+            });
+        }
+    }
+    function removeTargetMarker() {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+
+        if (cellView && cellView.model.isLink()) {
+            var target = cellView.model.attr('line/targetMarker');
+            if (target !== undefined) {
+                console.log('Target marker exists, removing it.');
+                cellView.model.removeAttr('line/targetMarker');
+            } else {
+                console.log('Target marker does not exist.');
+            }
+        }
+    }
+    $('#link-label-text-input').on('change', function (evt) {
+        debugger;
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/text/text', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-font-size').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/text/fontSize', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-font-family').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/text/fontFamily', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-font-thickness').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/text/fontWeight', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-text-color').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/text/fill', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-fill-color').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/rect/fill', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-outline-color').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/rect/stroke', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-label-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        try {
+            linkview.model.prop('labels/0/attrs/rect/strokeWidth', $(this).val());
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        linkview.update();
+    })
+    $('#link-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        linkview.model.attr({
+            line: { strokeWidth: $(this).val() }
+        });
+    })
+    $('#conection-link-color').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        linkview.model.attr({
+            line: { stroke: $(this).val() }
+        });
+    })
+    $('#link-source-marker-fill-color').on('change', function () {
+        debugger;
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var sourceMarkerAttrs = linkview.model.attr('line/sourceMarker');
+        sourceMarkerAttrs.fill = $(this).val();
+        linkview.model.attr('line/sourceMarker', sourceMarkerAttrs);
+        linkview.update();
+    })
+    $('#link-source-marker-outline-color').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var sourceMarkerAttrs = linkview.model.attr('line/sourceMarker');
+        sourceMarkerAttrs.stroke = $(this).val();
+        linkview.model.attr('line/sourceMarker', sourceMarkerAttrs);
+        linkview.update();
+    })
+    $('#link-source-marker-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var sourceMarkerAttrs = linkview.model.attr('line/sourceMarker');
+        sourceMarkerAttrs.strokeWidth = $(this).val();
+        linkview.model.attr('line/sourceMarker', sourceMarkerAttrs);
+        linkview.update();
+    })
+    $('#link-target-marker-fill-color').on('change', function () {
+        debugger;
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var targetMarkerAttrs = linkview.model.attr('line/targetMarker');
+        targetMarkerAttrs.fill = $(this).val();
+        linkview.model.attr('line/targetMarker', targetMarkerAttrs);
+        linkview.update();
+    })
+    $('#link-target-marker-outline-color').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var targetMarkerAttrs = linkview.model.attr('line/targetMarker');
+        targetMarkerAttrs.stroke = $(this).val();
+        linkview.model.attr('line/targetMarker', targetMarkerAttrs);
+        linkview.update();
+    })
+    $('#link-target-marker-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-link').attr('value-id');
+        var linkview = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var targetMarkerAttrs = linkview.model.attr('line/targetMarker');
+        targetMarkerAttrs.strokeWidth = $(this).val();
+        linkview.model.attr('line/targetMarker', targetMarkerAttrs);
+        linkview.update();
+    })
+    //basics
+    function valuetransferBasic(cellView) {
+        var id = cellView.model.id;
+        $('#properties-form-basic').attr('value-id', id);
+
+        var body_stroke = cellView.model.attr('body/stroke');
+        var body_fill = cellView.model.attr('body/fill');
+        var body_stroke_w = cellView.model.attr('body/strokeWidth');
+        var kieu = cellView.model.attr('body/stroke-dasharray');
+        $('#basic-fill-color').val(body_fill);
+        $('#basic-outline-color').val(body_stroke);
+        $('#basic-outline-thickness').val(body_stroke_w);
+        $('#basic-thickness-value').text(body_stroke_w + 'px')
+
+        var text = cellView.model.attr('label/text');
+        var textsize = cellView.model.attr('label/fontSize');
+        var textfamily = cellView.model.attr('label/fontFamily');
+        var textweight = cellView.model.attr('label/fontWeight');
+        var textfill = cellView.model.attr('label/fill');
+        $('#basic-text-input').val(text);
+        $('#basic-font-size').val(textsize);
+        $('#basic-font-size-value').text(textsize + 'px');
+        $('#basic-font-family').val(textfamily);
+        $('#basic-font-thickness').val(textweight);
+        $('#basic-text-color').val(textfill);
+    }
+
+    function updateCellAttr(attrPath, value) {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var update = {};
+        update[attrPath] = value;
+        cellView.model.attr(update);
+    }
+
+    $('#basic-fill-color').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            body: { fill: $(this).val() }
+        });
+    })
+    $('#basic-outline-color').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            body: { stroke: $(this).val() }
+        });
+    })
+    $('#basic-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            body: { strokeWidth: $(this).val() }
+        });
+    })
+    $('#basic-text-input').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            label: { text: $(this).val() }
+        });
+    })
+    $('#basic-font-size').on('change', function () {
+        debugger;
+        var thisss = $(this).val();
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            label: { fontSize: $(this).val() }
+        });
+    })
+    $('#basic-font-family').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            label: { fontFamily: $(this).val() }
+        });
+    })
+    $('#basic-font-thickness').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            label: { fontWeight: $(this).val() }
+        });
+    })
+    $('#basic-text-color').on('change', function () {
+        var valueId = $('#properties-form-basic').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            label: { fill: $(this).val() }
+        });
+    })
+
+    //sample
+    function valuetransferSample(cellView) {
+        debugger
+        var id = cellView.model.id;
+        $('#properties-form-sample').attr('value-id', id);
+
+        var attrs = cellView.model.attr();
+
+        // Header Presentation
+        $('#sample-header-fill-color').val(attrs.header.fill || '#000000');
+        $('#sample-header-outline-color').val(attrs.header.stroke || '#000000');
+        $('#sample-header-outline-thickness').val(attrs.header.strokeWidth || 1);
+        $('#sample-header-thickness-value').text((attrs.header.strokeWidth || 1) + 'px');
+
+        // Header Text
+        $('#sample-header-text-input').val(attrs.headerText.text || '');
+        $('#sample-header-font-size').val(attrs.headerText.fontSize || 12);
+        $('#sample-header-font-size-value').text((attrs.headerText.fontSize || 12) + 'px');
+        $('#sample-header-font-family').val(attrs.headerText.fontFamily || 'Arial');
+        $('#sample-header-font-thickness').val(attrs.headerText.fontWeight || 'Normal');
+        $('#sample-header-text-color').val(attrs.headerText.fill || '#000000');
+
+        // Body Presentation
+        $('#sample-body-outline-color').val(attrs.body.stroke || '#000000');
+        $('#sample-body-outline-thickness').val(attrs.body.strokeWidth || 1);
+        $('#sample-body-thickness-value').text((attrs.body.strokeWidth || 1) + 'px');
+
+        // Body Text - Using DOM to access foreignObject content
+        var foreignObjectElement = cellView.$('[joint-selector="foreignObject"]')[0];
+        if (foreignObjectElement) {
+            var backgroundElement = foreignObjectElement.querySelector('div');
+            if (backgroundElement) {
+                $('#sample-body-fill-color').val(rgbToHex(backgroundElement.style.backgroundColor));
+            }
+            debugger
+            var groupInfoElement = foreignObjectElement.querySelector('p[joint-selector="groupInfo"]');
+            if (groupInfoElement) {
+                var spanElement = groupInfoElement.querySelector('span');
+                if (spanElement) {
+                    $('#sample-body-text-input').val(spanElement.textContent);
+                }
+                $('#sample-body-font-size').val(parseInt(groupInfoElement.style.fontSize, 10));
+                $('#sample-body-font-size-value').text(groupInfoElement.style.fontSize);
+                $('#sample-body-font-family').val(groupInfoElement.style.fontFamily);
+                $('#sample-body-font-thickness').val(groupInfoElement.style.fontWeight);
+                $('#sample-body-text-color').val(rgbToHex(groupInfoElement.style.color));
+            }
+            var timeInfoElement = foreignObjectElement.querySelector('p[joint-selector="timeInfo"]');
+            if (timeInfoElement) {
+                var spanElement = timeInfoElement.querySelector('span');
+                if (spanElement) {
+                    $('#time-info-text-input').val(spanElement.textContent);
+                }
+                $('#time-info-font-size').val(parseInt(timeInfoElement.style.fontSize, 10));
+                $('#time-info-font-size-value').text(timeInfoElement.style.fontSize);
+                $('#time-info-font-family').val(timeInfoElement.style.fontFamily);
+                $('#time-info-font-thickness').val(timeInfoElement.style.fontWeight);
+                $('#time-info-text-color').val(rgbToHex(timeInfoElement.style.color));
+            }
+        }
+    }
+
+    // Helper function to convert RGB to HEX
+    function rgbToHex(rgb) {
+        var rgbValues = rgb.match(/\d+/g);
+        if (!rgbValues) return '#000000';
+        return '#' + rgbValues.map(function (x) {
+            var hex = parseInt(x).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+    }
+    function updateCellAttrSample(attrPath, value) {
+        debugger;
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var update = {};
+        if (attrPath.startsWith('foreignObject/')) {
+            // Handle foreignObject updates separately
+            var foreignObjectSelector = cellView.$('[joint-selector="foreignObject"]')[0];
+            if (foreignObjectSelector) {
+                var pElement = foreignObjectSelector.querySelector('p[joint-selector="groupInfo"]');
+                if (pElement) {
+                    var spanElement = pElement.querySelector('span');
+                    var divElement = foreignObjectSelector.querySelector('div');
+                    if (spanElement && attrPath === 'foreignObject/span/textContent') {
+                        spanElement.textContent = value;
+                    } else if (divElement && attrPath === 'foreignObject/div/backgroundColor') {
+                        divElement.style[attrPath.split('/')[2]] = value;
+                    } else {
+                        spanElement.style[attrPath.split('/')[2]] = value;
+                    }
+                }
+            }
+        }
+    }
+    function updateCellTimeAttrSample(attrPath, value) {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        var update = {};
+        if (attrPath.startsWith('foreignObject/')) {
+            // Handle foreignObject updates separately
+            var foreignObjectSelector = cellView.$('[joint-selector="foreignObject"]')[0];
+            if (foreignObjectSelector) {
+                var pElement = foreignObjectSelector.querySelector('p[joint-selector="timeInfo"]');
+                if (pElement) {
+                    var spanElement = pElement.querySelector('span');
+                    var divElement = foreignObjectSelector.querySelector('div');
+                    if (spanElement && attrPath === 'foreignObject/span/textContent') {
+                        spanElement.textContent = value;
+                    } else if (divElement && attrPath === 'foreignObject/div/backgroundColor') {
+                        divElement.style[attrPath.split('/')[2]] = value;
+                    } else {
+                        spanElement.style[attrPath.split('/')[2]] = value;
+                    }
+                }
+            }
+        }
+    }
+
+    $('#sample-header-fill-color').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            header: { fill: $(this).val() }
+        });
+    });
+    $('#sample-header-outline-color').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            header: { stroke: $(this).val() }
+        });
+    });
+    $('#sample-header-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            header: { strokeWidth: $(this).val() }
+        });
+    });
+    //$('#sample-header-outline-style').on('change', function () {
+    //    updateCellAttrSample('header/strokeDasharray', $(this).val() === 'solid' ? '' : $(this).val());
+    //});
+
+    // Header Text
+    $('#sample-header-text-input').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            headerText: { text: $(this).val() }
+        });
+    });
+    $('#sample-header-font-size').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            headerText: { fontSize: $(this).val() }
+        });
+    });
+    $('#sample-header-font-family').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            headerText: { fontFamily: $(this).val() }
+        });
+    });
+    $('#sample-header-font-thickness').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            headerText: { fontWeight: $(this).val() }
+        });
+    });
+    $('#sample-header-text-color').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            headerText: { fill: $(this).val() }
+        });
+    });
+    // Body Presentation
+    $('#sample-body-fill-color').on('change', function () {
+        updateCellAttrSample('foreignObject/div/backgroundColor', $(this).val());
+    });
+    $('#sample-body-outline-color').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            body: { stroke: $(this).val() }
+        });
+    });
+    $('#sample-body-outline-thickness').on('change', function () {
+        var valueId = $('#properties-form-sample').attr('value-id');
+        var cellView = paperMain.findViewByModel(paperMain.getModelById(valueId));
+        cellView.model.attr({
+            body: { strokeWidth: $(this).val() }
+        });
+    });
+    //$('#sample-body-outline-style').on('change', function () {
+    //    updateCellAttrSample('body/strokeDasharray', $(this).val() === 'solid' ? '' : $(this).val());
+    //});
+
+    // Body Text
+    $('#sample-body-text-input').on('change', function () {
+        updateCellAttrSample('foreignObject/span/textContent', $(this).val());
+    });
+
+    $('#sample-body-font-size').on('change', function () {
+        updateCellAttrSample('foreignObject/span/fontSize', $(this).val() + 'px');
+    });
+
+    $('#sample-body-font-family').on('change', function () {
+        updateCellAttrSample('foreignObject/span/fontFamily', $(this).val());
+    });
+
+    $('#sample-body-font-thickness').on('change', function () {
+        updateCellAttrSample('foreignObject/span/fontWeight', $(this).val());
+    });
+
+    $('#sample-body-text-color').on('change', function () {
+        updateCellAttrSample('foreignObject/span/color', $(this).val());
+    });
+    //time-info
+    $('#time-info-text-input').on('change', function () {
+        updateCellTimeAttrSample('foreignObject/span/textContent', $(this).val());
+    });
+
+    $('#time-info-font-size').on('change', function () {
+        updateCellTimeAttrSample('foreignObject/span/fontSize', $(this).val() + 'px');
+    });
+
+    $('#time-info-font-family').on('change', function () {
+        updateCellTimeAttrSample('foreignObject/span/fontFamily', $(this).val());
+    });
+
+    $('#time-info-font-thickness').on('change', function () {
+        updateCellTimeAttrSample('foreignObject/span/fontWeight', $(this).val());
+    });
+
+    $('#time-info-text-color').on('change', function () {
+        updateCellTimeAttrSample('foreignObject/span/color', $(this).val());
+    });
+
+
+
+
+
+
+
+    function updateProperties() {
+        if (selectedCellView) {
+            const content = $('#content').val();
+            const width = parseInt($('#width').val(), 10);
+            const height = parseInt($('#height').val(), 10);
+            const fill = $('#fill').val();
+
+            selectedCellView.model.attr({
+                text: { text: content },
+                body: { fill: fill }
+            });
+            selectedCellView.model.resize(width, height);
+            selectedCellView = null; // Reset selection after update
+        }
+    }
+    const { mask: MaskHighlighter, stroke: StrokeHighlighter } = highlighters;
+    //paperMain.on({
+    //    'link:pointerclick': function (linkView) {
+    //        paperMain.removeTools();
+    //        const linkToolsView = new dia.ToolsView({
+    //            tools: [
+    //                new linkTools.Vertices(),
+    //                new linkTools.Remove({
+    //                    x: 0,
+    //                    y: 0
+    //                }),
+    //                new linkTools.TargetArrowhead(),
+    //             /*   new LinkLabelTool()*/
+    //            ]
+    //        });
+    //        linkView.addTools(linkToolsView);
+    //        expandPropertiesLink();
+    //    }
+    //});
+    //paperMain.on('cell:pointerdblclick', function (cellView, evt) {
+    //    var cell = cellView.model;
+    //    if (cell.isLink()) {
+    //        cell.appendLabel({
+    //            attrs: {
+    //                text: {
+    //                    text: 'keepGradient',
+    //                    fill: 'black'
+    //                }
+    //            },
+    //            position: {
+    //                distance: 0.5,
+    //                angle: 270,
+    //                args: {
+    //                    keepGradient: true
+    //                }
+    //            }
+    //        });
+    //    }
+    //});
+    paperMain.on('element:pointerdblclick', function (elementView) {
+        var foreignObjectElement = elementView.$('[joint-selector="foreignObject"]')[0];
+        if (foreignObjectElement) {
+            var inputElement = foreignObjectElement.querySelector('input');
+            if (inputElement) {
+                inputElement.removeAttribute('readonly');
+                inputElement.focus();
+
+                inputElement.addEventListener('blur', function () {
+                    inputElement.setAttribute('readonly', true);
+                    elementView.model.attr('editText/text', inputElement.value);
+                });
+
+                inputElement.addEventListener('keydown', function (e) {
+                    if (e.keyCode === 13) { // Enter key
+                        inputElement.blur();
+                    }
+                });
+            }
+        }
+    });
+
+    //function showPopup(x, y, link) {
+    //    var popup = $('<div/>', {
+    //        'class': 'link-popup',
+    //        text: 'Label: '
+    //    }).css({
+    //        position: 'absolute',
+    //        top: y,
+    //        left: x,
+    //        background: 'white',
+    //        padding: '10px',
+    //        border: '1px solid #333',
+    //        borderRadius: '8px'
+    //    }).appendTo(document.body);
+
+    //    // Thêm logic để đóng popup khi cần
+    //    popup.on('click', function () { $(this).remove(); });
+    //}
+    paperMain.on("cell:mouseleave", (cellView) => {
+        MaskHighlighter.removeAll(paperMain, "frame");
+    });
+    paperMain.on("blank:pointerdown", () => {
+        paperMain.removeTools();
+        collapsePropertiesBasic();
+        collapsePropertiesSample();
+        collapsePropertiesLink();
+    });
+
+
+
+    // zoom
+    function zoomOnMousewheel(x, y, delta) {
+        var MIN_ZOOM = 0.4;
+        var MAX_ZOOM = 2;
+        var currentZoom = paperMain.scale().sx;
+        var newZoom = currentZoom + delta * 0.2;
+        if (newZoom > MIN_ZOOM && newZoom < MAX_ZOOM) {
+            paperMain.translate(0, 0);
+            paperMain.scale(newZoom, newZoom, 0, 0);
+        }
+    }
+
+    paperMain.on('blank:mousewheel', function (evt, x, y, delta) {
+        evt.preventDefault();
+        console.log('x: ' + x + ',y: ' + y + ',delta: ' + delta);
+        zoomOnMousewheel(x, y, delta);
+    });
+
+    paperMain.on('cell:mousewheel', function (_, evt, x, y, delta) {
+        evt.preventDefault();
+        console.log('x: ' + x + ',y: ' + y + ',delta: ' + delta);
+        zoomOnMousewheel(x, y, delta);
+    });
+    $('#zoom-out').on('click', function () {
+        zoomOnMousewheel(paperMain.$el.width() / 2, paperMain.$el.height() / 2, 1);
+    })
+    $('#zoom-in').on('click', function () {
+        zoomOnMousewheel(paperMain.$el.width() / 2, paperMain.$el.height() / 2, -1);
+    })
+    //paper draggable
+
+    var dragStartPosition = null;
+
+
+    paperMain.on('blank:pointerdown', function (event, x, y) {
+        var scale = paperMain.scale();
+        dragStartPosition = { x: x * scale.sx, y: y * scale.sy };
+    });
+    paperMain.on('cell:pointerup blank:pointerup', function (cellView, x, y) {
+        dragStartPosition = null;
+    });
+    $("#paper-container")
+        .mousemove(function (event) {
+            if (dragStartPosition)
+                paperMain.translate(
+                    event.offsetX - dragStartPosition.x,
+                    event.offsetY - dragStartPosition.y);
+        });
+
+</script>
